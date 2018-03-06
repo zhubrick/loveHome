@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/context"
+	_ "loveHome/models"
 	_ "loveHome/routers"
 	"net/http"
 	"strings"
@@ -10,6 +11,9 @@ import (
 
 func main() {
 	ignoreStaticPath()
+
+	//开启session功能
+	beego.BConfig.WebConfig.Session.SessionOn = true
 
 	beego.Run()
 }
