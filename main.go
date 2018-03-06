@@ -15,6 +15,8 @@ func main() {
 	//开启session功能
 	beego.BConfig.WebConfig.Session.SessionOn = true
 
+	beego.SetStaticPath("/group1/M00", "fastdfs/storage_data/data")
+
 	beego.Run()
 }
 

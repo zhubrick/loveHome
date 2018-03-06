@@ -1,12 +1,14 @@
 package controllers
 
 import (
-	"fmt"
+	"encoding/json"
+	//	"fmt"
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/cache"
 	_ "github.com/astaxie/beego/cache/redis"
 	"github.com/astaxie/beego/orm"
 	"loveHome/models"
+	"time"
 )
 
 type AreaController struct {
@@ -49,13 +51,25 @@ func (this *AreaController) GetAreaInfo() {
 	}
 
 	//1 从缓存中redis读数据
-	value := cache_conn.Get("haha")
-	if value != nil {
-		beego.Info(" cache get value = ", value)
-		fmt.Printf("value = %s\n", value)
-	}
+	/*
+		value := cache_conn.Get("haha")
+		if value != nil {
+			beego.Info(" cache get value = ", value)
+			fmt.Printf("value = %s\n", value)
+		}
+	*/
+	areas_info_value := cache_conn.Get("area_info")
+	if areas_info_value != nil {
+		//2 如果redis有 之前的json字符串数据那么直接返回给前段
+		//说明area_info key是存在的  value就是要返回给前段的json值
+		beego.Info(" ====== get area_info from cache !!! ======")
 
-	//2 如果redis有 之前的json字符串数据那么直接返回给前段
+		var area_info interface{}
+
+		json.Unmarshal(areas_info_value.([]byte), &area_info)
+		resp["data"] = area_info
+		return
+	}
 
 	//3 如果redis没有之前的json字符串数据， 从mysql查
 	o := orm.NewOrm()
@@ -81,6 +95,15 @@ func (this *AreaController) GetAreaInfo() {
 
 	//succ
 	resp["data"] = areas
+
+	//将 areas json字符串 存到area_info redis的key中
+	areas_info_str, _ := json.Marshal(areas)
+	if err := cache_conn.Put("area_info", areas_info_str, time.Second*3600); err != nil {
+		beego.Info("set area_info --> redis fail err = ", err)
+		resp["errno"] = models.RECODE_DBERR
+		resp["errno"] = models.RecodeText(models.RECODE_DBERR)
+		return
+	}
 
 	//将封装好的返回结构体map 发送给前段
 	return
