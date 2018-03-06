@@ -1,7 +1,10 @@
 package controllers
 
 import (
+	"fmt"
 	"github.com/astaxie/beego"
+	"github.com/astaxie/beego/cache"
+	_ "github.com/astaxie/beego/cache/redis"
 	"github.com/astaxie/beego/orm"
 	"loveHome/models"
 )
@@ -36,7 +39,21 @@ func (this *AreaController) GetAreaInfo() {
 
 	defer this.RetData(resp)
 
+	//0  链接redis数据
+	cache_conn, err := cache.NewCache("redis", `{"key":"lovehome","conn":"127.0.0.1:6381","dbNum":"0"}`)
+	if err != nil {
+		beego.Info("cache redis conn err, err= ", err)
+		resp["errno"] = models.RECODE_DBERR
+		resp["errmsg"] = models.RecodeText(models.RECODE_DBERR)
+		return
+	}
+
 	//1 从缓存中redis读数据
+	value := cache_conn.Get("haha")
+	if value != nil {
+		beego.Info(" cache get value = ", value)
+		fmt.Printf("value = %s\n", value)
+	}
 
 	//2 如果redis有 之前的json字符串数据那么直接返回给前段
 
